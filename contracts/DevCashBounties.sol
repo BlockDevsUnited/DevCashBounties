@@ -15,22 +15,39 @@ contract ERC20 is ERC20Basic {
 }
 
 contract DevCashBountyCreator{
-    address DCASH = 0x0fca8Fdb0FB115A33BAadEc6e7A141FFC1bC7d5a;
+    address DCASH = 0x96ee2557a943DE170F8Ba1990845c49f6fA55383;
+    address[] public IndividualBounties;
+    address[] public SingleBounties;
+    address[] public MultiBounties;
 
-    function newSingleBounty(uint _amount) public{
-        SingleBounty S = new SingleBounty();
-        ERC20(DCASH).transferFrom(msg.sender,address(S),_amount);
+    function newIndividualBounty(uint _amount, address BountyHunter) public {
+       IndividualBounty I = new IndividualBounty(DCASH, BountyHunter);
+        ERC20(DCASH).transferFrom(msg.sender,address(I),_amount);
+        IndividualBounties.push(address(I));
     }
+    function newSingleBounty(uint _amount) public{
+        SingleBounty S = new SingleBounty(DCASH);
+        ERC20(DCASH).transferFrom(msg.sender,address(S),_amount);
+        SingleBounties.push(address(S));
+    }
+    function newMultiBounty(uint _amount,uint numBounties) public {
+        MultiBounty M = new MultiBounty(DCASH,numBounties);
+        ERC20(DCASH).transferFrom(msg.sender,address(M),_amount);
+        MultiBounties.push(address(M));
+    }
+
 }
 
-contract SingleBounty{
+contract IndividualBounty{
     address BountyHunter;
     address Issuer;
     string submission;
-    address DCASH = 0x0fca8Fdb0FB115A33BAadEc6e7A141FFC1bC7d5a;
+    address DCASH;
 
-    constructor() public {
+    constructor(address _DCASH, address _BountyHunter) public {
         Issuer = tx.origin;
+        DCASH = _DCASH;
+        BountyHunter = _BountyHunter;
     }
 
     function approve() public{
@@ -45,26 +62,56 @@ contract SingleBounty{
     }
 }
 
-/*
-contract MultiBounty{
-    mapping(address=>string) public BountyHunters;
-    address[] public BountyHunterList;
+contract SingleBounty{
     address Issuer;
-    address DCASH = 0x0fca8Fdb0FB115A33BAadEc6e7A141FFC1bC7d5a;
-    uint numBounties;
+    mapping(address=>string) public submissions;
+    address[] public claimants;
+    address DCASH;
 
-    constructor() public {
+    constructor(address _DCASH) public {
         Issuer = tx.origin;
+        DCASH = _DCASH;
     }
 
-    function approve(address BountyHunter) public{
+    function claim(string memory _submission) public {
+        bytes memory EmptyStringTest = bytes(submissions[msg.sender]);
+        require(EmptyStringTest.length!=0);
+        submissions[msg.sender] = _submission;
+        claimants.push(msg.sender);
+    }
+
+    function approve(uint _claim) public{
         require(msg.sender==Issuer);
         uint balance = ERC20(DCASH).balanceOf(address(this));
-        ERC20(DCASH).transfer(BountyHunter,balance);
+        address claimant = claimants[_claim];
+        ERC20(DCASH).transfer(claimant,balance);
+    }
+}
+
+contract MultiBounty{
+    mapping(address=>string) public submissions;
+    address[] public claimants;
+    address Issuer;
+    address DCASH;
+    uint numBounties;
+
+    constructor(address _DCASH, uint _numBounties) public {
+        Issuer = tx.origin;
+        DCASH = _DCASH;
+        numBounties = _numBounties;
     }
 
-     function claim(string memory _response) public {
-        //require(responses[msg.sender]=="");
-        BountyHunterList.push(msg.sender);
+    function approve(uint claim) public{
+        require(msg.sender==Issuer && numBounties>0);
+        address BountyHunter = claimants[claim];
+        uint individualBounty = ERC20(DCASH).balanceOf(address(this))/--numBounties;
+        ERC20(DCASH).transfer(BountyHunter,individualBounty);
     }
-}*/
+
+     function claim(string memory _submission) public {
+          bytes memory EmptyStringTest = bytes(submissions[msg.sender]);
+        require(EmptyStringTest.length!=0);
+        submissions[msg.sender] = _submission;
+        claimants.push(msg.sender);
+    }
+}
