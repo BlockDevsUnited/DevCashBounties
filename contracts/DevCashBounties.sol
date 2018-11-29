@@ -15,7 +15,7 @@ contract ERC20 is ERC20Basic {
 }
 
 contract DevCashBountyCreator{
-    address DCASH = 0x96ee2557a943DE170F8Ba1990845c49f6fA55383;
+    address DCASH = 0x0fca8Fdb0FB115A33BAadEc6e7A141FFC1bC7d5a;
     address[] public IndividualBounties;
     address[] public SingleBounties;
     address[] public MultiBounties;
@@ -93,7 +93,11 @@ contract MultiBounty{
     address[] public claimants;
     address Issuer;
     address DCASH;
-    uint numBounties;
+    uint public numBounties;
+
+    address[] public beenAwarded;
+    uint public awarded;
+
 
     constructor(address _DCASH, uint _numBounties) public {
         Issuer = tx.origin;
@@ -104,13 +108,16 @@ contract MultiBounty{
     function approve(uint claim) public{
         require(msg.sender==Issuer && numBounties>0);
         address BountyHunter = claimants[claim];
-        uint individualBounty = ERC20(DCASH).balanceOf(address(this))/--numBounties;
+        uint individualBounty = ERC20(DCASH).balanceOf(address(this))/numBounties--;
         ERC20(DCASH).transfer(BountyHunter,individualBounty);
+
+        beenAwarded.push(BountyHunter);
+        awarded++;
     }
 
      function claim(string memory _submission) public {
-          bytes memory EmptyStringTest = bytes(submissions[msg.sender]);
-        require(EmptyStringTest.length!=0);
+        bytes memory EmptyStringTest = bytes(submissions[msg.sender]);
+        require(EmptyStringTest.length==0);
         submissions[msg.sender] = _submission;
         claimants.push(msg.sender);
     }
