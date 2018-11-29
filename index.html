@@ -61,7 +61,7 @@
 
         var address = await BountyContract.beenAwarded(i);
         cell1.innerHTML = await BountyContract.submissions(address);
-        cell2.innerHTML = reward;
+        cell2.innerHTML = reward + " DCASH";
       }
     }
 
@@ -73,6 +73,7 @@
   <label id="bountyContractAddress"></label>
   <br><br><br>
 
+<label><B>Bounty Value</B>: 1000 DCASH</label> <br>
 <input type="text" id = "submission"> Name </input> <br>
 <button onclick="claim()"> Claim </button>
 <br><br><br>
